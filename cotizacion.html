@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cotización EDS</title>
+<style>
+*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;background:#f3f4f6;color:#111827}.wrap{max-width:1000px;margin:auto;padding:18px}.card{background:white;border-radius:14px;padding:22px;box-shadow:0 4px 18px #0001}.brand{display:flex;gap:14px;align-items:center;border-bottom:2px solid #111827;padding-bottom:14px;margin-bottom:18px}.logo{width:68px;height:68px;object-fit:contain;border:1px solid #ddd;border-radius:10px}.brand h1{margin:0;font-size:24px}.brand p{margin:5px 0 0;font-weight:bold}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}label{font-weight:bold;font-size:13px}input,textarea,select{font:inherit;padding:10px;border:1px solid #cbd5e1;border-radius:8px;width:100%}textarea{min-height:80px;resize:vertical}.table-wrap{overflow:auto;margin-top:18px}table{width:100%;border-collapse:collapse;min-width:700px}th,td{border:1px solid #d1d5db;padding:7px}th{background:#e5e7eb;font-size:13px}td input{border:0;padding:6px}.num{text-align:right}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.btn{border:0;border-radius:9px;padding:11px 16px;font-weight:bold;cursor:pointer}.primary{background:#111827;color:white}.secondary{background:#e5e7eb}.danger{background:#fee2e2}.totals{margin-left:auto;max-width:360px;margin-top:18px}.total-row{display:flex;justify-content:space-between;padding:6px 0}.grand{font-size:20px;font-weight:bold;border-top:2px solid #111827;margin-top:5px;padding-top:10px}.report{display:none}.signature{border:1px solid #d1d5db;border-radius:8px;height:120px;touch-action:none;background:white}.signbox{margin-top:18px}.hint{font-size:12px;color:#6b7280}@media(max-width:650px){.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.wrap{padding:8px}.card{padding:14px}.brand h1{font-size:19px}}
+@media print{body{background:white}.wrap{max-width:none;padding:0}.card{box-shadow:none;padding:0}.form,.actions,.hint,.screen-only{display:none!important}.report{display:block}.print-header{display:flex;align-items:center;gap:14px;border-bottom:2px solid #111827;padding-bottom:10px}.print-logo{width:72px;height:72px;object-fit:contain}.print-header h1{margin:0;font-size:22px}.print-header p{margin:4px 0;font-weight:bold}.print-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:14px 0}.print-table{width:100%;border-collapse:collapse}.print-table th,.print-table td{border:1px solid #555;padding:6px}.print-table th{background:#eee}.print-totals{margin-left:auto;width:280px;margin-top:12px}.signature-print{margin-top:45px;width:260px;text-align:center;border-top:1px solid #111;padding-top:5px}}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+<div class="form">
+<div class="brand"><div class="logo">LOGO</div><div><h1>COTIZACIÓN DE SERVICIO</h1><p>Mantenimiento eléctrico y mecánico de estaciones de servicio</p></div></div>
+<div class="grid">
+<div class="field"><label>N.º de cotización</label><input id="numero"></div>
+<div class="field"><label>Fecha</label><input id="fecha" type="date"></div>
+<div class="field"><label>Cliente / Empresa</label><input id="cliente"></div>
+<div class="field"><label>Estación de servicio</label><input id="estacion"></div>
+<div class="field"><label>Dirección</label><input id="direccion"></div>
+<div class="field"><label>Contacto</label><input id="contacto"></div>
+<div class="field full"><label>Descripción / alcance del trabajo</label><textarea id="descripcion" placeholder="Detalle de los trabajos a realizar..."></textarea></div>
+</div>
+<div class="table-wrap"><table id="items"><thead><tr><th>Cant.</th><th>Unidad</th><th>Descripción</th><th>Precio unitario</th><th>Total</th><th></th></tr></thead><tbody></tbody></table></div>
+<button class="btn secondary" onclick="addItem()">+ Agregar ítem</button>
+<div class="totals"><div class="total-row"><span>Subtotal</span><b id="subtotal">$0.00</b></div><div class="total-row"><span>IVA (%)</span><input id="iva" type="number" min="0" step="0.01" value="15" oninput="calc()" style="width:90px"></div><div class="total-row"><span>IVA</span><b id="ivaValor">$0.00</b></div><div class="total-row grand"><span>TOTAL</span><b id="total">$0.00</b></div></div>
+<div class="grid signbox"><div class="field full"><label>Observaciones / condiciones de pago</label><textarea id="observaciones" placeholder="Validez de la cotización, forma de pago, tiempo de entrega, etc."></textarea></div></div>
+<div class="actions"><button class="btn primary" onclick="generar()">📄 Generar / imprimir PDF</button><button class="btn secondary" onclick="nueva()">🆕 Nueva cotización</button></div>
+</div>
+<div class="report" id="report"></div>
+</div></div>
+<script>
+const $=id=>document.getElementById(id);function money(n){return '$'+Number(n||0).toFixed(2)}
+function today(){let d=new Date();return d.toISOString().slice(0,10)}
+function nextNumber(){let n=Number(localStorage.getItem('cotNum')||0)+1;localStorage.setItem('cotNum',n);return 'COT-'+String(n).padStart(4,'0')}
+function addItem(q=1,u='und',d='',p=0){let tr=document.createElement('tr');tr.innerHTML=`<td><input class="qty" type="number" min="0" step="0.01" value="${q}" oninput="calc()"></td><td><input class="unit" value="${u}"></td><td><input class="desc" value="${d}"></td><td><input class="price" type="number" min="0" step="0.01" value="${p}" oninput="calc()"></td><td class="line num">$0.00</td><td><button class="btn danger" onclick="this.closest('tr').remove();calc()">×</button></td>`;$('items').querySelector('tbody').appendChild(tr);calc()}
+function calc(){let s=0;document.querySelectorAll('#items tbody tr').forEach(r=>{let q=+r.querySelector('.qty').value||0,p=+r.querySelector('.price').value||0,v=q*p;s+=v;r.querySelector('.line').textContent=money(v)});let iva=(+$('iva').value||0)/100*s;$('subtotal').textContent=money(s);$('ivaValor').textContent=money(iva);$('total').textContent=money(s+iva);return{s,iva,total:s+iva}}
+function generar(){let c=calc(),rows='';document.querySelectorAll('#items tbody tr').forEach(r=>{rows+=`<tr><td>${r.querySelector('.qty').value}</td><td>${r.querySelector('.unit').value}</td><td>${r.querySelector('.desc').value}</td><td class="num">${money(r.querySelector('.price').value)}</td><td class="num">${r.querySelector('.line').textContent}</td></tr>`});$('report').innerHTML=`<div class="print-header"><div class="print-logo" style="border:1px solid #ddd;border-radius:8px;display:flex;align-items:center;justify-content:center">LOGO</div><div><h1>COTIZACIÓN DE SERVICIO</h1><p>Mantenimiento eléctrico y mecánico de estaciones de servicio</p></div></div><div class="print-meta"><div><b>Cotización:</b> ${$('numero').value}</div><div><b>Fecha:</b> ${$('fecha').value}</div><div><b>Cliente:</b> ${$('cliente').value}</div><div><b>Estación:</b> ${$('estacion').value}</div><div><b>Dirección:</b> ${$('direccion').value}</div><div><b>Contacto:</b> ${$('contacto').value}</div></div><h3>Alcance del trabajo</h3><p>${$('descripcion').value.replace(/\n/g,'<br>')}</p><table class="print-table"><thead><tr><th>Cant.</th><th>Unidad</th><th>Descripción</th><th>Precio unitario</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table><div class="print-totals"><div class="total-row"><span>Subtotal</span><b>${money(c.s)}</b></div><div class="total-row"><span>IVA ${$('iva').value}%</span><b>${money(c.iva)}</b></div><div class="total-row grand"><span>TOTAL</span><b>${money(c.total)}</b></div></div><h3>Observaciones / condiciones</h3><p>${$('observaciones').value.replace(/\n/g,'<br>')}</p><div class="signature-print">Firma responsable</div>`;window.print()}
+function nueva(){document.querySelectorAll('input,textarea').forEach(x=>{if(x.id!=='iva')x.value=''});$('numero').value=nextNumber();$('fecha').value=today();$('iva').value=15;$('items').querySelector('tbody').innerHTML='';addItem()}
+window.onload=nueva;
+</script>
+</body></html>
