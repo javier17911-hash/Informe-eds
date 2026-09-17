@@ -1,0 +1,49 @@
+name: Separar logo EDS
+
+on:
+  push:
+    paths:
+      - '.github/workflows/separar-logo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  separar-logo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Extraer logo y corregir referencias
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, base64
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          pattern = r'data:image/([^;]+);base64,([A-Za-z0-9+/=]+)'
+          m = re.search(pattern, s)
+          if not m:
+              raise SystemExit('No se encontró el logo incrustado.')
+
+          ext = m.group(1).lower()
+          data = base64.b64decode(m.group(2))
+          logo = Path('logo.' + ('jpg' if ext in ('jpeg','jpg') else ext))
+          logo.write_bytes(data)
+
+          s2 = re.sub(pattern, logo.name, s)
+          s2 = s2.replace('.report-brand img{width:70px;height:70px;object-fit:contain}', '.report-brand img{width:80px;height:80px;object-fit:contain;display:block}')
+          p.write_text(s2, encoding='utf-8')
+          print('Logo creado:', logo)
+          PY
+
+      - name: Guardar cambios
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html logo.jpg
+          git diff --cached --quiet || git commit -m 'Separar logo y corregir carga del informe'
+          git push
