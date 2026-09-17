@@ -1,4 +1,4 @@
-const CACHE_NAME='informe-eds-v22';
+const CACHE_NAME='informe-eds-v23';
 const APP_SHELL=['./','./index.html','./manifest.json','./delete.js','./logo.jpg'];
 
 self.addEventListener('install',event=>event.waitUntil(
@@ -10,36 +10,40 @@ self.addEventListener('activate',event=>event.waitUntil(
 ));
 
 function forceHeader(html){
+  const service='SERVICIOS TÉCNICOS DE ESTACIONES';
   const title='INFORME DE TRABAJO Y/O COTIZACION';
-  const logo='./logo.jpg?v=22';
+  const logo='./logo.jpg?v=23';
 
-  // Remove the old wording only when it exists as separate HTML text.
-  // The legend embedded inside the logo image remains untouched.
-  html=html.replace(/Mantenimiento eléctrico y mecánico de EDS/gi,title);
-  html=html.replace(/Mantenimiento electrico y mecanico de EDS/gi,title);
+  // Elimina solo la leyenda antigua que aparecía fuera del logo.
+  // La leyenda que forma parte de la imagen del logo permanece intacta.
+  html=html.replace(/Mantenimiento eléctrico y mecánico de EDS/gi,'');
+  html=html.replace(/Mantenimiento electrico y mecanico de EDS/gi,'');
 
-  // Use the complete original logo, including its legend.
+  // Logo completo a la izquierda; textos a la derecha.
   html=html.replace(/<header class="head">[\s\S]*?<\/header>/i,
-    '<header class="head"><img class="logo" src="'+logo+'" alt="Logo EDS"><div><h1>'+title+'</h1></div></header>'
+    '<header class="head"><img class="logo" src="'+logo+'" alt="Logo EDS"><div class="head-copy"><div class="service-title">'+service+'</div><h1>'+title+'</h1></div></header>'
   );
 
-  // Use the same complete original logo in the report/cotization preview.
+  // Mismo diseño para el informe/cotización: logo a la izquierda.
   html=html.replace(/function\s+reportHeader\s*\(\)\s*\{[\s\S]*?\n\}/,
-    'function reportHeader(){return`<div class="report-brand"><img class="report-logo" src="'+logo+'" alt="Logo EDS"><div><h1>'+title+'</h1></div></div>`}'
+    'function reportHeader(){return`<div class="report-brand"><img class="report-logo" src="'+logo+'" alt="Logo EDS"><div class="report-copy"><div class="service-title">'+service+'</div><h1>'+title+'</h1></div></div>`}'
   );
 
-  // Fallback for already-rendered report markup.
-  html=html.replace(/(<div class="report-brand">[\s\S]*?<h1>)[\s\S]*?(<\/h1>)/i,'$1'+title+'$2');
-
-  const css=`<style id="eds-v22">
-.head .logo{display:block!important;width:230px!important;height:auto!important;max-width:42vw!important;max-height:95px!important;object-fit:contain!important;background:#fff!important;padding:2px!important;border-radius:10px!important;flex:0 0 auto!important}
+  const css=`<style id="eds-v23">
+.head{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:18px!important;text-align:left!important}
+.head .logo{display:block!important;width:210px!important;height:auto!important;max-width:36vw!important;max-height:95px!important;object-fit:contain!important;background:#fff!important;padding:2px!important;border-radius:10px!important;flex:0 0 auto!important}
+.head-copy{display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:flex-start!important;gap:6px!important;min-width:0!important}
+.service-title{font-weight:800!important;letter-spacing:.4px!important;line-height:1.15!important}
+.head .service-title{color:#fff!important;font-size:19px!important}
 .head h1{margin:0!important;color:#fff!important;font-size:25px!important;line-height:1.15!important}
-.report-brand{display:flex!important;align-items:center!important;gap:18px!important;border-bottom:3px solid #0b5cff!important;padding:0 0 13px!important;margin-bottom:18px!important}
-.report-logo{display:block!important;width:175px!important;height:auto!important;max-width:35vw!important;max-height:85px!important;object-fit:contain!important;background:#fff!important;padding:2px!important;border-radius:8px!important;flex:0 0 auto!important}
+.report-brand{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:16px!important;border-bottom:3px solid #0b5cff!important;padding:0 0 13px!important;margin-bottom:18px!important}
+.report-logo{display:block!important;width:165px!important;height:auto!important;max-width:32vw!important;max-height:85px!important;object-fit:contain!important;background:#fff!important;padding:2px!important;border-radius:8px!important;flex:0 0 auto!important}
+.report-copy{display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:flex-start!important;gap:5px!important;min-width:0!important}
+.report-brand .service-title{color:#0b5cff!important;font-size:16px!important}
 .report-brand h1{margin:0!important;color:#0b5cff!important;font-size:22px!important;line-height:1.2!important}
-@media(max-width:600px){.head{align-items:center!important}.head .logo{width:165px!important;max-width:45vw!important;max-height:80px!important}.head h1{font-size:20px!important}.report-brand{gap:12px!important}.report-logo{width:125px!important;max-width:38vw!important;max-height:72px!important}.report-brand h1{font-size:19px!important}}
+@media(max-width:600px){.head{gap:10px!important}.head .logo{width:145px!important;max-width:42vw!important;max-height:78px!important}.head .service-title{font-size:14px!important}.head h1{font-size:18px!important}.report-brand{gap:10px!important}.report-logo{width:115px!important;max-width:36vw!important;max-height:68px!important}.report-brand .service-title{font-size:13px!important}.report-brand h1{font-size:17px!important}}
 </style>`;
-  if(!html.includes('id="eds-v22"')) html=html.replace('</head>',css+'</head>');
+  if(!html.includes('id="eds-v23"')) html=html.replace('</head>',css+'</head>');
   return html;
 }
 
