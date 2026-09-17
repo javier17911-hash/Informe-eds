@@ -1,4 +1,4 @@
-const CACHE_NAME = 'informe-eds-v2';
+const CACHE_NAME = 'informe-eds-v3';
 const APP_SHELL = ['./', './index.html', './manifest.json', './logo.svg', './delete.js'];
 
 self.addEventListener('install', event => {
@@ -11,6 +11,20 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+  const accept = event.request.headers.get('accept') || '';
+  if (event.request.mode === 'navigate' || accept.includes('text/html')) {
+    event.respondWith(
+      fetch(event.request).then(async response => {
+        const text = await response.text();
+        const injected = text.replace('</body>', '<script src="./delete.js?v=3"></script></body>');
+        const headers = new Headers(response.headers);
+        headers.set('content-type','text/html; charset=utf-8');
+        headers.delete('content-length');
+        return new Response(injected,{status:response.status,statusText:response.statusText,headers});
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
   event.respondWith(
     caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
       const copy = response.clone();
