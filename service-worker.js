@@ -1,4 +1,4 @@
-const CACHE_NAME = 'informe-eds-v5';
+const CACHE_NAME = 'informe-eds-v6';
 const APP_SHELL = ['./', './index.html', './manifest.json', './logo.svg', './delete.js'];
 
 self.addEventListener('install', event => {
@@ -16,8 +16,8 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request).then(async response => {
         const text = await response.text();
-        const logoFix = '<style id="eds-logo-fix">.report-brand{gap:18px;align-items:center}.report-brand img{width:230px!important;height:auto!important;max-height:70px!important;object-fit:contain;flex:0 0 auto}.report-brand h1{font-size:24px}.report-brand p{font-size:13px}@media(max-width:600px){.report-brand{gap:10px}.report-brand img{width:165px!important;max-height:58px!important}.report-brand h1{font-size:21px}}</style>';
-        const injected = text.replace('</head>', logoFix + '</head>').replace('</body>', '<script src="./delete.js?v=5"></script></body>');
+        const logoFix = '<style id="eds-logo-fix">.report-brand{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:8px!important;border-bottom:3px solid #0b5cff!important;padding-bottom:12px!important;margin-bottom:18px!important}.report-brand img{display:block!important;width:360px!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain!important;flex:0 0 auto!important}.report-brand h1{margin:0!important;font-size:24px!important;line-height:1.2!important}.report-brand p{margin:0!important;font-size:13px!important}@media(max-width:600px){.report-brand{gap:6px!important}.report-brand img{width:280px!important}.report-brand h1{font-size:21px!important}}</style>';
+        const injected = text.replace('</head>', logoFix + '</head>').replace('</body>', '<script src="./delete.js?v=6"></script></body>');
         const headers = new Headers(response.headers);
         headers.set('content-type','text/html; charset=utf-8');
         headers.delete('content-length');
