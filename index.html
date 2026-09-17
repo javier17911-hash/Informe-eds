@@ -17,7 +17,7 @@
 'use strict';
 const $=id=>document.getElementById(id);let materials=[],photos=[],quoteItems=[],currentReport=null,currentQuote=null;
 function today(){return new Date().toISOString().slice(0,10)}function esc(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-const LOGO_DATA='logo_eds.jpg';charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="8" y="8" width="84" height="84" rx="18" fill="#0b5cff"/><path d="M24 67V39l26-16 26 16v28M37 67V48h26v19M50 23v-8" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/><path d="M17 76h66" stroke="#ffd166" stroke-width="7" stroke-linecap="round"/></svg>');
+const LOGO_DATA='logo_eds.jpg?v=2';
 function reportHeader(){return `<div class="report-brand"><img src="${LOGO_DATA}" alt="Logo Informe EDS"><div><h1>INFORME EDS</h1><p>Mantenimiento eléctrico y mecánico de estaciones de servicio</p></div></div>`}
 function show(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));if(id==='home')$('homeBtn').classList.add('active');if(id==='reports')$('reportsBtn').classList.add('active');if(id==='quotes')$('quotesBtn').classList.add('active');window.scrollTo(0,0)}
 function nextNum(key,prefix){let n=Number(localStorage.getItem(key)||0)+1;localStorage.setItem(key,n);return prefix+'-'+String(n).padStart(4,'0')}
