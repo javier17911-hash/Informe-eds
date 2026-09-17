@@ -1,1 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220"><rect width="600" height="220" rx="24" fill="#fff"/><rect x="18" y="18" width="184" height="184" rx="20" fill="#0b5cff"/><text x="110" y="125" text-anchor="middle" font-family="Arial,sans-serif" font-size="72" font-weight="800" fill="#fff">EDS</text><text x="225" y="92" font-family="Arial,sans-serif" font-size="30" font-weight="800" fill="#0b5cff">MANTENIMIENTO</text><text x="225" y="132" font-family="Arial,sans-serif" font-size="28" font-weight="700" fill="#17202a">ELÉCTRICO Y MECÁNICO</text><text x="225" y="166" font-family="Arial,sans-serif" font-size="24" fill="#475467">ESTACIONES DE SERVICIO</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 260" role="img" aria-labelledby="title desc">
+<title id="title">Mantenimiento eléctrico y mecánico de EDS</title>
+<desc id="desc">Logo EDS para mantenimiento eléctrico y mecánico de estaciones de servicio</desc>
+<rect x="4" y="4" width="892" height="252" rx="28" fill="#ffffff" stroke="#0b5cff" stroke-width="8"/>
+<rect x="24" y="24" width="212" height="212" rx="24" fill="#0b5cff"/>
+<text x="130" y="157" text-anchor="middle" font-family="Arial,sans-serif" font-size="82" font-weight="800" fill="#ffffff">EDS</text>
+<text x="270" y="92" font-family="Arial,sans-serif" font-size="38" font-weight="800" fill="#0b5cff">MANTENIMIENTO</text>
+<text x="270" y="145" font-family="Arial,sans-serif" font-size="35" font-weight="700" fill="#17202a">ELÉCTRICO Y MECÁNICO</text>
+<text x="270" y="193" font-family="Arial,sans-serif" font-size="29" font-weight="600" fill="#475467">ESTACIONES DE SERVICIO</text>
+</svg>
