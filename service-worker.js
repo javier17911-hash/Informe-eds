@@ -1,4 +1,4 @@
-const CACHE_NAME = 'informe-eds-v3';
+const CACHE_NAME = 'informe-eds-v4';
 const APP_SHELL = ['./', './index.html', './manifest.json', './logo.svg', './delete.js'];
 
 self.addEventListener('install', event => {
@@ -16,7 +16,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request).then(async response => {
         const text = await response.text();
-        const injected = text.replace('</body>', '<script src="./delete.js?v=3"></script></body>');
+        const injected = text.replace('</body>', '<script src="./delete.js?v=4"></script></body>');
         const headers = new Headers(response.headers);
         headers.set('content-type','text/html; charset=utf-8');
         headers.delete('content-length');
