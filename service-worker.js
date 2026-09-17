@@ -1,5 +1,5 @@
-const CACHE_NAME='informe-eds-v21';
-const APP_SHELL=['./','./index.html','./manifest.json','./delete.js','./logo-symbol.svg'];
+const CACHE_NAME='informe-eds-v22';
+const APP_SHELL=['./','./index.html','./manifest.json','./delete.js','./logo.jpg'];
 
 self.addEventListener('install',event=>event.waitUntil(
   caches.open(CACHE_NAME).then(()=>self.skipWaiting())
@@ -11,34 +11,35 @@ self.addEventListener('activate',event=>event.waitUntil(
 
 function forceHeader(html){
   const title='INFORME DE TRABAJO Y/O COTIZACION';
-  const logo='./logo-symbol.svg?v=21';
+  const logo='./logo.jpg?v=22';
 
-  // Remove the old wording from normal HTML text/attributes.
+  // Remove the old wording only when it exists as separate HTML text.
+  // The legend embedded inside the logo image remains untouched.
   html=html.replace(/Mantenimiento eléctrico y mecánico de EDS/gi,title);
   html=html.replace(/Mantenimiento electrico y mecanico de EDS/gi,title);
 
-  // Replace only the rendered header, using the dedicated clean SVG logo.
+  // Use the complete original logo, including its legend.
   html=html.replace(/<header class="head">[\s\S]*?<\/header>/i,
     '<header class="head"><img class="logo" src="'+logo+'" alt="Logo EDS"><div><h1>'+title+'</h1></div></header>'
   );
 
-  // Use the same clean logo in report and quotation previews.
+  // Use the same complete original logo in the report/cotization preview.
   html=html.replace(/function\s+reportHeader\s*\(\)\s*\{[\s\S]*?\n\}/,
     'function reportHeader(){return`<div class="report-brand"><img class="report-logo" src="'+logo+'" alt="Logo EDS"><div><h1>'+title+'</h1></div></div>`}'
   );
 
-  // Fallback for older rendered report markup.
+  // Fallback for already-rendered report markup.
   html=html.replace(/(<div class="report-brand">[\s\S]*?<h1>)[\s\S]*?(<\/h1>)/i,'$1'+title+'$2');
 
-  const css=`<style id="eds-v21">
-.head .logo{display:block!important;width:220px!important;height:90px!important;object-fit:contain!important;background:#fff!important;padding:4px!important;border-radius:10px!important;flex:0 0 auto!important}
+  const css=`<style id="eds-v22">
+.head .logo{display:block!important;width:230px!important;height:auto!important;max-width:42vw!important;max-height:95px!important;object-fit:contain!important;background:#fff!important;padding:2px!important;border-radius:10px!important;flex:0 0 auto!important}
 .head h1{margin:0!important;color:#fff!important;font-size:25px!important;line-height:1.15!important}
 .report-brand{display:flex!important;align-items:center!important;gap:18px!important;border-bottom:3px solid #0b5cff!important;padding:0 0 13px!important;margin-bottom:18px!important}
-.report-logo{display:block!important;width:165px!important;height:90px!important;object-fit:contain!important;background:#fff!important;border-radius:8px!important;padding:2px!important;flex:0 0 auto!important}
+.report-logo{display:block!important;width:175px!important;height:auto!important;max-width:35vw!important;max-height:85px!important;object-fit:contain!important;background:#fff!important;padding:2px!important;border-radius:8px!important;flex:0 0 auto!important}
 .report-brand h1{margin:0!important;color:#0b5cff!important;font-size:22px!important;line-height:1.2!important}
-@media(max-width:600px){.head{align-items:center!important}.head .logo{width:150px!important;height:72px!important}.head h1{font-size:20px!important}.report-brand{gap:12px!important}.report-logo{width:120px!important;height:72px!important}.report-brand h1{font-size:19px!important}}
+@media(max-width:600px){.head{align-items:center!important}.head .logo{width:165px!important;max-width:45vw!important;max-height:80px!important}.head h1{font-size:20px!important}.report-brand{gap:12px!important}.report-logo{width:125px!important;max-width:38vw!important;max-height:72px!important}.report-brand h1{font-size:19px!important}}
 </style>`;
-  if(!html.includes('id="eds-v21"')) html=html.replace('</head>',css+'</head>');
+  if(!html.includes('id="eds-v22"')) html=html.replace('</head>',css+'</head>');
   return html;
 }
 
