@@ -1,4 +1,4 @@
-const CACHE_NAME='informe-eds-v30';
+const CACHE_NAME='informe-eds-v31';
 
 self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate',event=>event.waitUntil(
@@ -23,7 +23,7 @@ function forceHeader(html){
     '$1$2'
   );
 
-  const css=`<style id="eds-v30">
+  const css=`<style id="eds-v31">
 /* Encabezado principal: logo intacto, más legible y sin deformación */
 .head>div{flex:1 1 auto!important;text-align:center!important;min-width:0!important}
 .head .logo{width:230px!important;height:90px!important;object-fit:contain!important;padding:2px!important;flex:0 0 auto!important}
@@ -45,10 +45,15 @@ function forceHeader(html){
 }
 </style>`;
 
-  const patch=`<script id="eds-report-v30">\nreportHeader=function(){\n  return '<div class="report-brand"><img src="./logo.jpg" alt="Logo de Mantenimiento Eléctrico y Mecánico de EDS"><div><div class="report-kicker">SERVICIOS TÉCNICOS DE ESTACIONES</div><h1>INFORME DE TRABAJO Y/O COTIZACION</h1></div></div>';\n};\n</script>`;
+  const patch=`<script id="eds-report-v31">
+reportHeader=function(){
+  const logo=(document.getElementById('headLogo')||{}).src||'';
+  return '<div class="report-brand"><img src="'+logo+'" alt="Logo de Mantenimiento Eléctrico y Mecánico de EDS"><div><div class="report-kicker">SERVICIOS TÉCNICOS DE ESTACIONES</div><h1>INFORME DE TRABAJO Y/O COTIZACION</h1></div></div>';
+};
+</script>`;
 
-  if(!html.includes('id="eds-v30"')) html=html.replace('</head>',css+'</head>');
-  if(!html.includes('id="eds-report-v30"')) html=html.replace('</body>',patch+'</body>');
+  if(!html.includes('id="eds-v31"')) html=html.replace('</head>',css+'</head>');
+  if(!html.includes('id="eds-report-v31"')) html=html.replace('</body>',patch+'</body>');
   return html;
 }
 
