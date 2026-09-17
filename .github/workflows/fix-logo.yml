@@ -15,19 +15,16 @@ jobs:
       - name: Descargar repositorio
         uses: actions/checkout@v4
 
-      - name: Reemplazar logo sin modificar las demás funciones
+      - name: Corregir referencias del logo
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import re
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          s2=re.sub(r'<svg class="logo".*?</svg>', '<img class="logo" src="logo_eds.jpg" alt="Mantenimiento Eléctrico y Mecánico de EDS">', s, count=1, flags=re.S)
-          s2=re.sub(r"const LOGO_DATA=.*?;", "const LOGO_DATA='logo_eds.jpg';", s2, count=1, flags=re.S)
-          if s2 == s:
-              print('No hubo cambios; el logo ya está corregido.')
-          else:
-              p.write_text(s2, encoding='utf-8')
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = re.sub(r'<svg class="logo".*?</svg>', '<img class="logo" src="logo_eds.jpg?v=2" alt="Mantenimiento Eléctrico y Mecánico de EDS">', s, count=1, flags=re.S)
+          s = re.sub(r'^const LOGO_DATA=.*$', "const LOGO_DATA='logo_eds.jpg?v=2';", s, count=1, flags=re.M)
+          p.write_text(s, encoding='utf-8')
           PY
 
       - name: Guardar corrección en main
@@ -39,7 +36,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Usar logo oficial en cabecera, informes y cotizaciones'
+          git commit -m 'Corregir logo oficial y caché'
           git push
 
       - name: Solicitar nueva publicación de GitHub Pages
