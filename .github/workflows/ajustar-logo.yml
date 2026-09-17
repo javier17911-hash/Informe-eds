@@ -1,0 +1,38 @@
+name: Ajustar logo del informe
+
+on:
+  push:
+    paths:
+      - '.github/workflows/ajustar-logo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ajustar-logo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Cambiar logo del informe a 80x80
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = '.report-brand img{width:70px;height:70px;object-fit:contain}'
+          new = '.report-brand img{width:80px;height:80px;object-fit:contain;display:block}'
+          if old not in s:
+              raise SystemExit('No se encontró el estilo actual del logo.')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Guardar cambio en GitHub
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Ajustar logo del informe a 80x80 px'
+          git push
