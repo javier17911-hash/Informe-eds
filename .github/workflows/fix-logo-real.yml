@@ -1,0 +1,37 @@
+name: Fix logo EDS
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fix-logo-real.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract logo and fix HTML
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re,base64
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          m=re.search(r'data:image/([^;]+);base64,([A-Za-z0-9+/=]+)',s)
+          if m:
+            ext='jpg' if m.group(1).lower() in ('jpg','jpeg') else m.group(1).lower()
+            Path('logo.'+ext).write_bytes(base64.b64decode(m.group(2)))
+            s=re.sub(r'data:image/[^;]+;base64,[A-Za-z0-9+/=]+','logo.'+ext,s)
+          s=s.replace('.logo{width:115px;height:72px;background:#fff;border-radius:12px;padding:4px;object-fit:contain}', '.logo{width:150px;height:70px;background:#fff;border-radius:10px;padding:5px;object-fit:contain;display:block;flex:0 0 auto}')
+          s=s.replace('.report-brand img{width:80px;height:80px;object-fit:contain;display:block}', '.report-brand img{width:120px;height:80px;object-fit:contain;display:block;flex:0 0 auto}')
+          s=s.replace('src="logo.jpg"','src="logo.jpg?v=4"').replace('src="${LOGO_DATA}"','src="${LOGO_DATA}?v=4"')
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html logo.*
+          git diff --cached --quiet || git commit -m 'Corregir logo y proporciones del informe'
+          git push
