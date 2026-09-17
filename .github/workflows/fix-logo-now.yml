@@ -1,0 +1,33 @@
+name: Fix logo real now
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-logo-now.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Usar logo.jpg real y corregir proporciones
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = re.sub(r'data:image/[^;]+;base64,[A-Za-z0-9+/=]+', 'logo.jpg?v=5', s)
+          s = s.replace('.logo{width:115px;height:72px;background:#fff;border-radius:12px;padding:4px;object-fit:contain}', '.logo{width:150px;height:70px;background:#fff;border-radius:10px;padding:5px;object-fit:contain;display:block;flex:0 0 auto}')
+          s = s.replace('.report-brand img{width:120px;height:80px;object-fit:contain;display:block;flex:0 0 120px}', '.report-brand img{width:120px;height:80px;object-fit:contain;display:block;flex:0 0 120px}')
+          p.write_text(s, encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'Usar logo.jpg real en Informe EDS'
+          git push
