@@ -1,4 +1,4 @@
-const CACHE_NAME = 'informe-eds-v6';
+const CACHE_NAME = 'informe-eds-v7';
 const APP_SHELL = ['./', './index.html', './manifest.json', './logo.svg', './delete.js'];
 
 self.addEventListener('install', event => {
@@ -16,8 +16,37 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request).then(async response => {
         const text = await response.text();
-        const logoFix = '<style id="eds-logo-fix">.report-brand{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:8px!important;border-bottom:3px solid #0b5cff!important;padding-bottom:12px!important;margin-bottom:18px!important}.report-brand img{display:block!important;width:360px!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain!important;flex:0 0 auto!important}.report-brand h1{margin:0!important;font-size:24px!important;line-height:1.2!important}.report-brand p{margin:0!important;font-size:13px!important}@media(max-width:600px){.report-brand{gap:6px!important}.report-brand img{width:280px!important}.report-brand h1{font-size:21px!important}}</style>';
-        const injected = text.replace('</head>', logoFix + '</head>').replace('</body>', '<script src="./delete.js?v=6"></script></body>');
+        const fix = `<style id="eds-ui-fix">
+.report-brand{display:grid!important;grid-template-columns:minmax(240px,300px) 1fr!important;align-items:center!important;gap:18px!important;border-bottom:3px solid #0b5cff!important;padding-bottom:12px!important;margin-bottom:18px!important}
+.report-brand img{display:block!important;width:100%!important;max-width:300px!important;height:auto!important;max-height:90px!important;object-fit:contain!important;justify-self:start!important}
+.head .logo{width:260px!important;height:78px!important;object-fit:contain!important;background:#fff!important}
+.delete-btn,.delete-saved{display:inline-flex!important;visibility:visible!important;opacity:1!important;align-items:center!important;justify-content:center!important;min-width:44px!important}
+@media(max-width:600px){.report-brand{grid-template-columns:1fr!important;text-align:center!important}.report-brand img{max-width:260px!important;max-height:76px!important;justify-self:center!important}.head .logo{width:190px!important;height:64px!important}}
+</style>`;
+        const script = `<script>(function(){
+function fix(){
+  const headerLogo=document.querySelector('.head .logo');
+  if(headerLogo){headerLogo.src='./logo.svg?v=9';headerLogo.alt='Mantenimiento Eléctrico y Mecánico de EDS';}
+  document.querySelectorAll('.report-brand img').forEach(img=>{img.src='./logo.svg?v=9';img.alt='Logo EDS';});
+  document.querySelectorAll('.recent-item').forEach(item=>{
+    const actions=item.querySelector('.recent-actions');
+    if(!actions)return;
+    if(actions.querySelector('.delete-btn,.delete-saved'))return;
+    const open=[...actions.querySelectorAll('button')].find(b=>/openSaved/.test(b.getAttribute('onclick')||''));
+    if(!open)return;
+    const m=(open.getAttribute('onclick')||'').match(/openSaved\\(['\"]([^'\"]+)['\"],\\s*(\\d+)\\)/);
+    if(!m)return;
+    const b=document.createElement('button');
+    b.className='btn danger delete-btn';b.type='button';b.textContent='🗑️';b.title='Eliminar documento';
+    b.addEventListener('click',function(){if(typeof window.deleteSaved==='function'){window.deleteSaved(m[1],Number(m[2]));}});
+    actions.appendChild(b);
+  });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fix);else fix();
+window.addEventListener('load',fix);
+setInterval(fix,1000);
+})();</script>`;
+        const injected = text.replace('</head>', fix + '</head>').replace('</body>', '<script src="./delete.js?v=7"></script>' + script + '</body>');
         const headers = new Headers(response.headers);
         headers.set('content-type','text/html; charset=utf-8');
         headers.delete('content-length');
