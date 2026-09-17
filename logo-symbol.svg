@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="650" viewBox="0 0 920 650">
+  <rect width="920" height="650" fill="#fff"/>
+  <svg x="0" y="0" width="570" height="650" viewBox="0 70 570 720" preserveAspectRatio="none">
+    <image href="./logo.jpg" x="0" y="0" width="1983" height="793" preserveAspectRatio="none"/>
+  </svg>
+  <svg x="585" y="105" width="325" height="440" viewBox="560 130 325 435" preserveAspectRatio="none">
+    <image href="./logo.jpg" x="0" y="0" width="1983" height="793" preserveAspectRatio="none"/>
+  </svg>
+</svg>
