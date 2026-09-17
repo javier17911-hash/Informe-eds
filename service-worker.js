@@ -1,4 +1,4 @@
-const CACHE_NAME='informe-eds-v31';
+const CACHE_NAME='informe-eds-v32-logo-fixed';
 
 self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate',event=>event.waitUntil(
@@ -14,6 +14,7 @@ function forceHeader(html){
     /(<header class="head">[\s\S]*?<div class="brand-kicker">)[\s\S]*?(<\/div>)/i,
     '$1'+service+'$2'
   );
+  html=html.replace(/(<img id="headLogo" class="logo" src=")[^"]+(")/i, '$1./logo.jpg?v=20260917-2$2');
   html=html.replace(
     /(<header class="head">[\s\S]*?<h1>)[\s\S]*?(<\/h1>)/i,
     '$1'+title+'$2'
