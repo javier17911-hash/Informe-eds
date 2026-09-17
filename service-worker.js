@@ -1,21 +1,28 @@
-const CACHE_NAME='informe-eds-v26';
+const CACHE_NAME='informe-eds-v27';
 
 self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate',event=>event.waitUntil(
-  caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).then(()=>self.clients.claim())
+  caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())
 ));
 
 function forceHeader(html){
   const service='SERVICIOS TÉCNICOS DE ESTACIONES';
   const title='INFORME DE TRABAJO Y/O COTIZACION';
 
-  // NO modifica el bloque del logo ni su CSS. Solo cambia textos existentes.
-  html=html.replace(/Mantenimiento eléctrico y mecánico de EDS/gi, service);
-  html=html.replace(/Mantenimiento electrico y mecanico de EDS/gi, service);
-  html=html.replace(/Servicios técnicos en estaciones de servicio/gi, service);
-  html=html.replace(/Servicios tecnicos en estaciones de servicio/gi, service);
-  html=html.replace(/Informes de trabajo y cotizaciones/gi, '');
-  html=html.replace(/Informes de trabajo y cotizaciones/gi, title);
+  // Mantener el logo exactamente como está en index.html.
+  // Solo se cambian los textos dentro del encabezado, sin tocar la imagen.
+  html=html.replace(
+    /(<header class="head">[\s\S]*?<div class="brand-kicker">)[\s\S]*?(<\/div>)/i,
+    '$1'+service+'$2'
+  );
+  html=html.replace(
+    /(<header class="head">[\s\S]*?<h1>)[\s\S]*?(<\/h1>)/i,
+    '$1'+title+'$2'
+  );
+  html=html.replace(
+    /(<header class="head">[\s\S]*?<p>)[\s\S]*?(<\/p>)/i,
+    '$1'+'$2'
+  );
 
   return html;
 }
