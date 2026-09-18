@@ -1,4 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 256 102" width="256" height="102">
-  <title>Mantenimiento Eléctrico y Mecánico de EDS</title>
-  <image href="./logo.jpg" x="0" y="0" width="256" height="102" preserveAspectRatio="xMidYMid meet"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1536 614" width="1536" height="614">
+<rect width="1536" height="614" fill="#fff"/>
+<g transform="translate(35,55)">
+ <circle cx="190" cy="230" r="105" fill="none" stroke="#123f78" stroke-width="35"/>
+ <path d="M190 105L135 225h45l-35 125 95-150h-48z" fill="#ffd21a"/>
+ <g fill="#123f78"><rect x="173" y="25" width="34" height="70"/><rect x="173" y="365" width="34" height="70"/><rect x="0" y="213" width="70" height="34"/><rect x="310" y="213" width="70" height="34"/></g>
+ <g fill="#d9dde3" stroke="#777" stroke-width="5"><circle cx="90" cy="230" r="45"/><path d="M80 270l-35 120 70 25 25-110z"/><path d="M115 300l-85 50 30 42 95-55z"/><path d="M125 375l-50 115 45 15 65-105z"/><path d="M195 375l45 115 45-15-65-105z"/></g>
+ <path d="M70 150c-30-70 80-105 125-70 35-55 140-30 130 45-8 60-55 65-95 48l-55 5c-45 18-90 5-105-28z" fill="#ffd21a"/>
+ <path d="M60 130h-45v60h45l25-30zM315 130h70v60h-70l-25-30z" fill="#aaa"/>
+ <path d="M40 115l-65 20 20 55 70-20z" fill="#aaa"/>
+</g>
+<g font-family="Arial,Helvetica,sans-serif" font-weight="700" fill="#123f78">
+ <text x="450" y="190" font-size="96">Mantenimiento</text>
+ <text x="450" y="295" font-size="82">Eléctrico y Mecánico</text>
+ <text x="760" y="410" font-size="70">de</text>
+ <text x="860" y="440" font-size="110" fill="#f4c400" stroke="#123f78" stroke-width="7" paint-order="stroke">EDS</text>
+</g>
+<g stroke="#f4c400" stroke-width="14"><line x1="460" y1="430" x2="745" y2="430"/><line x1="1100" y1="430" x2="1480" y2="430"/></g>
 </svg>
