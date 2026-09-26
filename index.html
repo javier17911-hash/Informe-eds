@@ -215,25 +215,91 @@ function printReport(){previewReport();preparePrintTitle(reportObj());$('report'
 function preparePrintTitle(x){let parts=[x.number,x.client,x.station,x.date].filter(Boolean).map(v=>String(v).replace(/[\\/:*?"<>|]/g,'-').trim());document.title=parts.length?parts.join('_'):'Informe_EDS'}
 async function saveSharePDF(){
   saveReport();
-  previewReport();
   const x=reportObj();
-  preparePrintTitle(x);
-  $('saveNotice').innerHTML='<div class="notice">⏳ Preparando el PDF completo...</div>';
+  $('saveNotice').innerHTML='<div class="notice">⏳ Creando PDF completo, espere...</div>';
   try{
     if(!window.jspdf) throw new Error('PDF_LIBS');
-    const node=$('reportPreview');
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
-    await pdf.html(node,{
-      margin:[10,10,10,10],
-      autoPaging:'text',
-      html2canvas:{scale:1.15,useCORS:true,backgroundColor:'#ffffff',logging:false},
-      image:{type:'jpeg',quality:0.92},
-      width:190,
-      windowWidth:980
-    });
-    const blob=pdf.output('blob');
+    const M=12,W=210-M*2,H=297-M;
+    let y=M;
+    const lineH=5.2;
     const safe=(x.number||'Informe_EDS').replace(/[^a-zA-Z0-9_-]/g,'_');
+
+    function page(){pdf.addPage();y=M}
+    function need(h){if(y+h>H){page()}}
+    function title(t,size=13){
+      need(9);pdf.setFont('helvetica','bold');pdf.setFontSize(size);pdf.setTextColor(11,92,255);pdf.text(t,M,y);y+=7;
+    }
+    function textBlock(label,text){
+      title(label,11);
+      pdf.setFont('helvetica','normal');pdf.setFontSize(10);pdf.setTextColor(23,32,42);
+      const lines=pdf.splitTextToSize(String(text||'—'),W);
+      for(const line of lines){need(lineH);pdf.text(line,M,y);y+=lineH}
+      y+=3;
+    }
+    function tableRow(cols,widths,head=false){
+      const cells=cols.map((v,i)=>pdf.splitTextToSize(String(v??'—'),widths[i]-3));
+      const h=Math.max(...cells.map(a=>a.length))*4.7+5;
+      need(h);
+      let xx=M;
+      pdf.setFont('helvetica',head?'bold':'normal');pdf.setFontSize(9);pdf.setTextColor(23,32,42);
+      cells.forEach((lines,i)=>{pdf.rect(xx,y,widths[i],h);lines.forEach((ln,j)=>pdf.text(ln,xx+1.5,y+4+j*4.7));xx+=widths[i]});
+      y+=h;
+    }
+    pdf.setFont('helvetica','bold');pdf.setFontSize(17);pdf.setTextColor(11,92,255);
+    pdf.text('MANTENIMIENTO ELÉCTRICO Y MECÁNICO DE EDS',M,y);y+=7;
+    pdf.setFontSize(13);pdf.text('INFORME DE TRABAJO',M,y);y+=9;
+    tableRow(['Informe',x.number,'Fecha',x.date],[30,65,25,66],true);
+    tableRow(['Cliente',x.client,'Estación',x.station],[30,65,25,66]);
+    tableRow(['Dirección',x.address,'Contacto',x.contact],[30,65,25,66]);
+    tableRow(['Tipo',x.type,'Equipo',x.equipment+(x.equipmentId?' · '+x.equipmentId:'')],[30,65,25,66]);
+    if(x.start||x.end) tableRow(['Inicio',x.start,'Fin',x.end],[30,65,25,66]);
+    textBlock('Motivo / falla reportada',x.reason);
+    textBlock('Diagnóstico',x.diagnosis);
+    textBlock('Trabajo realizado',x.work);
+    textBlock('Pruebas y verificaciones',x.tests);
+    textBlock('Resultado',x.result);
+    textBlock('Observaciones / recomendaciones',x.obs);
+
+    if(x.materials&&x.materials.length){
+      title('Materiales / repuestos',11);
+      tableRow(['Descripción','Cant.','Unidad','Observación'],[75,20,25,66],true);
+      x.materials.forEach(m=>tableRow([m.desc,m.qty,m.unit,m.obs],[75,20,25,66]));
+    }
+
+    if(x.photos&&x.photos.length){
+      title('Fotografías',11);
+      for(const src of x.photos){
+        try{
+          const im=new Image();
+          im.src=src;
+          await new Promise((res,rej)=>{im.onload=res;im.onerror=rej});
+          const maxW=82,maxH=62;
+          const ratio=Math.min(maxW/im.width,maxH/im.height);
+          const iw=im.width*ratio,ih=im.height*ratio;
+          if(y+ih>H) page();
+          pdf.addImage(src,'JPEG',M,y,iw,ih,'FAST');
+          y+=ih+6;
+        }catch(_){}
+      }
+    }
+
+    need(35);
+    pdf.setFont('helvetica','bold');pdf.setFontSize(10);pdf.setTextColor(23,32,42);
+    pdf.text('Técnico responsable: '+String(x.tech||'—'),M,y);y+=8;
+    pdf.text('Firma del cliente:',M,y);y+=4;
+    if(x.signature){
+      try{
+        const im=new Image();im.src=x.signature;
+        await new Promise((res,rej)=>{im.onload=res;im.onerror=rej});
+        if(y+35>H) page();
+        pdf.addImage(x.signature,'PNG',M,y,80,30);
+        y+=35;
+      }catch(_){pdf.text('Firma registrada',M,y);y+=6}
+    }else{pdf.text('Sin firma registrada',M,y);y+=6}
+
+    const blob=pdf.output('blob');
     const file=new File([blob],safe+'.pdf',{type:'application/pdf'});
     if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
       await navigator.share({files:[file],title:safe,text:'Informe de trabajo '+(x.number||'')});
@@ -242,11 +308,11 @@ async function saveSharePDF(){
       const url=URL.createObjectURL(blob);
       const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
       setTimeout(()=>URL.revokeObjectURL(url),5000);
-      $('saveNotice').innerHTML='<div class="notice">✓ PDF completo generado. Puedes guardarlo en Archivos.</div>';
+      $('saveNotice').innerHTML='<div class="notice">✓ PDF completo generado.</div>';
     }
   }catch(e){
     console.error(e);
-    $('saveNotice').innerHTML='<div class="notice">⚠️ No se pudo generar el PDF completo. Intenta nuevamente desde Safari.</div>';
+    $('saveNotice').innerHTML='<div class="notice">⚠️ No se pudo crear el PDF completo. Revise la conexión a Internet y vuelva a intentar.</div>';
   }
 }
 function newQuote(){showView('quote');['qClient','qStation','qAddress','qContact','qDescription'].forEach(id=>$(id).value='');$('qNumber').value=nextNum('edsQuoteNum','COT-');$('qDate').value=today();$('qConditions').value='Cotización válida por 15 días. Valores sujetos a las condiciones indicadas en la propuesta.';$('quoteBody').innerHTML='';addQuoteItem();$('quotePreview').innerHTML=''}
