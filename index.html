@@ -213,22 +213,67 @@ function reportHTML(x){let mats=x.materials?.length?`<h3>Materiales / repuestos<
 function previewReport(){$('reportPreview').innerHTML=reportHTML(reportObj())}
 function printReport(){previewReport();preparePrintTitle(reportObj());$('report').classList.add('printing');window.print();setTimeout(()=>{$('report').classList.remove('printing');document.title='Informe EDS | Informes y Cotizaciones'},700)}
 function preparePrintTitle(x){let parts=[x.number,x.client,x.station,x.date].filter(Boolean).map(v=>String(v).replace(/[\\/:*?"<>|]/g,'-').trim());document.title=parts.length?parts.join('_'):'Informe_EDS'}
-function saveSharePDF(){
+async function saveSharePDF(){
   saveReport();
   previewReport();
+
   const x=reportObj();
-  preparePrintTitle(x);
-  $('saveNotice').innerHTML='<div class="notice">📄 Informe listo. Se abrirá la vista de impresión para crear el PDF.</div>';
-  $('report').classList.add('printing');
-  setTimeout(()=>{
-    try{window.print();}catch(e){
-      $('saveNotice').innerHTML='<div class="notice">⚠️ Safari no pudo abrir la impresión. Abre Informe EDS directamente en Safari.</div>';
+  const source=$('reportPreview');
+  if(!source || !source.innerHTML){
+    $('saveNotice').innerHTML='<div class="notice">⚠️ No hay contenido para generar el PDF.</div>';
+    return;
+  }
+
+  const filename=(x.number||'Informe_EDS')+'_'+(x.client||'')+'_'+(x.date||'')+'.pdf';
+  const cleanName=filename.replace(/[\\/:*?"<>|]/g,'-').replace(/\\s+/g,'_');
+
+  $('saveNotice').innerHTML='<div class="notice">⏳ Generando PDF, espera un momento...</div>';
+
+  try{
+    if(!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF no está disponible');
+
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+
+    await pdf.html(source,{
+      x:10,
+      y:10,
+      width:190,
+      windowWidth:source.scrollWidth||980,
+      autoPaging:'text',
+      margin:[10,10,10,10],
+      html2canvas:{
+        scale:1.5,
+        useCORS:true,
+        allowTaint:true,
+        backgroundColor:'#ffffff',
+        imageTimeout:15000
+      }
+    });
+
+    const blob=pdf.output('blob');
+    const file=new File([blob],cleanName,{type:'application/pdf'});
+
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:cleanName,text:'Informe EDS'});
+      $('saveNotice').innerHTML='<div class="notice">✓ PDF generado y enviado al menú de compartir del iPhone.</div>';
+      return;
     }
-    setTimeout(()=>{
-      $('report').classList.remove('printing');
-      document.title='Informe EDS | Informes y Cotizaciones';
-    },1000);
-  },150);
+
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=cleanName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+
+    $('saveNotice').innerHTML='<div class="notice">✓ PDF generado. Puedes guardarlo en Archivos desde Safari.</div>';
+  }catch(e){
+    console.error('Error generando PDF:',e);
+    $('saveNotice').innerHTML='<div class="notice">⚠️ No se pudo generar el PDF: '+esc(e.message||e)+'</div>';
+  }
 }
 function newQuote(){showView('quote');['qClient','qStation','qAddress','qContact','qDescription'].forEach(id=>$(id).value='');$('qNumber').value=nextNum('edsQuoteNum','COT-');$('qDate').value=today();$('qConditions').value='Cotización válida por 15 días. Valores sujetos a las condiciones indicadas en la propuesta.';$('quoteBody').innerHTML='';addQuoteItem();$('quotePreview').innerHTML=''}
 function addQuoteItem(v={}){let tr=document.createElement('tr');tr.innerHTML=`<td><input class="q-desc" value="${esc(v.desc||'')}"></td><td><input class="q-qty" type="number" min="0" step="0.01" value="${v.qty??1}" oninput="calcQuote()"></td><td><input class="q-unit" value="${esc(v.unit||'und')}"></td><td><input class="q-price" type="number" min="0" step="0.01" value="${v.price??0}" oninput="calcQuote()"></td><td class="q-line">$0.00</td><td><button class="btn danger" onclick="this.closest('tr').remove();calcQuote()">×</button></td>`;$('quoteBody').appendChild(tr);calcQuote()}
