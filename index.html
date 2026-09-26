@@ -227,52 +227,96 @@ async function saveSharePDF(){
   const filename=(x.number||'Informe_EDS')+'_'+(x.client||'')+'_'+(x.date||'')+'.pdf';
   const cleanName=filename.replace(/[\\/:*?"<>|]/g,'-').replace(/\\s+/g,'_');
 
-  $('saveNotice').innerHTML='<div class="notice">⏳ Generando PDF, espera un momento...</div>';
+  $('saveNotice').innerHTML='<div class="notice">⏳ Generando PDF real, espera un momento...</div>';
+
+  let renderBox=null;
 
   try{
+    if(typeof html2canvas!=='function') throw new Error('html2canvas no está disponible');
     if(!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF no está disponible');
+
+    /* Renderizamos una copia con ancho A4 para evitar que iPhone capture
+       el contenedor móvil o un elemento oculto como una página en blanco. */
+    renderBox=document.createElement('div');
+    renderBox.style.cssText='position:absolute;left:-10000px;top:0;width:794px;background:#fff;color:#101828;padding:28px;box-sizing:border-box;z-index:-1;';
+    renderBox.innerHTML=source.innerHTML;
+    document.body.appendChild(renderBox);
+
+    const images=Array.from(renderBox.querySelectorAll('img'));
+    await Promise.all(images.map(img=>{
+      if(img.complete) return Promise.resolve();
+      return new Promise(resolve=>{
+        img.onload=resolve;
+        img.onerror=resolve;
+      });
+    }));
+
+    const canvas=await html2canvas(renderBox,{
+      scale:1.5,
+      useCORS:true,
+      allowTaint:true,
+      backgroundColor:'#ffffff',
+      logging:false,
+      imageTimeout:20000
+    });
+
+    if(!canvas.width || !canvas.height) throw new Error('El contenido generado está vacío');
 
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
 
-    await pdf.html(source,{
-      x:10,
-      y:10,
-      width:190,
-      windowWidth:source.scrollWidth||980,
-      autoPaging:'text',
-      margin:[10,10,10,10],
-      html2canvas:{
-        scale:1.5,
-        useCORS:true,
-        allowTaint:true,
-        backgroundColor:'#ffffff',
-        imageTimeout:15000
-      }
-    });
+    const pageW=210;
+    const pageH=297;
+    const margin=10;
+    const contentW=pageW-margin*2;
+    const contentH=pageH-margin*2;
+    const pxPerMm=canvas.width/contentW;
+    const pagePx=Math.floor(contentH*pxPerMm);
+
+    let offsetY=0;
+    let page=0;
+
+    while(offsetY<canvas.height){
+      const sliceH=Math.min(pagePx,canvas.height-offsetY);
+      const pageCanvas=document.createElement('canvas');
+      pageCanvas.width=canvas.width;
+      pageCanvas.height=sliceH;
+      const ctx=pageCanvas.getContext('2d');
+      ctx.fillStyle='#ffffff';
+      ctx.fillRect(0,0,pageCanvas.width,pageCanvas.height);
+      ctx.drawImage(canvas,0,offsetY,canvas.width,sliceH,0,0,canvas.width,sliceH);
+
+      if(page>0) pdf.addPage();
+      const imgData=pageCanvas.toDataURL('image/jpeg',0.92);
+      const renderedH=sliceH/pxPerMm;
+      pdf.addImage(imgData,'JPEG',margin,margin,contentW,renderedH);
+
+      offsetY+=sliceH;
+      page++;
+    }
 
     const blob=pdf.output('blob');
     const file=new File([blob],cleanName,{type:'application/pdf'});
 
     if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
       await navigator.share({files:[file],title:cleanName,text:'Informe EDS'});
-      $('saveNotice').innerHTML='<div class="notice">✓ PDF generado y enviado al menú de compartir del iPhone.</div>';
-      return;
+      $('saveNotice').innerHTML='<div class="notice">✓ PDF generado correctamente y enviado al menú de compartir del iPhone.</div>';
+    }else{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=cleanName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),30000);
+      $('saveNotice').innerHTML='<div class="notice">✓ PDF generado. Puedes guardarlo en Archivos y compartirlo desde allí.</div>';
     }
-
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;
-    a.download=cleanName;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),30000);
-
-    $('saveNotice').innerHTML='<div class="notice">✓ PDF generado. Puedes guardarlo en Archivos desde Safari.</div>';
   }catch(e){
     console.error('Error generando PDF:',e);
     $('saveNotice').innerHTML='<div class="notice">⚠️ No se pudo generar el PDF: '+esc(e.message||e)+'</div>';
+  }finally{
+    if(renderBox) renderBox.remove();
   }
 }
 function newQuote(){showView('quote');['qClient','qStation','qAddress','qContact','qDescription'].forEach(id=>$(id).value='');$('qNumber').value=nextNum('edsQuoteNum','COT-');$('qDate').value=today();$('qConditions').value='Cotización válida por 15 días. Valores sujetos a las condiciones indicadas en la propuesta.';$('quoteBody').innerHTML='';addQuoteItem();$('quotePreview').innerHTML=''}
