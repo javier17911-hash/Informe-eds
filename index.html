@@ -100,7 +100,7 @@ textarea{min-height:90px;resize:vertical}
     </div>
     <label>Motivo / falla reportada</label><textarea id="rReason"></textarea>
     <label>Diagnóstico</label><textarea id="rDiagnosis"></textarea>
-    <label>Trabajo realizado</label><textarea id="rWork"></textarea>
+    <label>Trabajo realizado</label><textarea id="rWork"></textarea><div class="muted no-print" style="margin-top:5px">🎙️ También puedes usar el atajo “Dictate & Share” para enviar el dictado directamente a este campo.</div>
     <label>Pruebas y verificaciones</label><textarea id="rTests"></textarea>
     <label>Resultado</label><textarea id="rResult"></textarea>
     <label>Observaciones / recomendaciones</label><textarea id="rObs"></textarea>
@@ -164,6 +164,8 @@ function showView(v){document.querySelectorAll('.view').forEach(x=>x.classList.r
 function refreshHome(){let r=getData(RKEY),q=getData(QKEY);$('reportCount').textContent=r.length;$('quoteCount').textContent=q.length;let all=[...r.map((x,i)=>({...x,kind:'Informe',key:RKEY,index:i})),...q.map((x,i)=>({...x,kind:'Cotización',key:QKEY,index:i}))].sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||'')).slice(0,10);$('recent').innerHTML=all.length?all.map(x=>`<div class="recent-item"><div><b>${esc(x.kind+' '+(x.number||''))}</b><div class="muted">${esc(x.client||'')} · ${esc(x.station||'')}<br>${esc(x.date||'')}</div></div><div class="recent-actions"><button class="btn secondary" onclick="openSaved('${x.key}',${x.index})">Abrir</button><button class="btn danger delete-btn" onclick="deleteSaved('${x.key}',${x.index},'${esc(x.number||x.kind)}')" title="Eliminar">🗑️</button></div></div>`).join(''):'<div class="muted">No hay documentos guardados.</div>'}
 function deleteSaved(k,i,n){let a=getData(k);if(!a[i])return;if(confirm('¿Eliminar '+n+'?\nEsta acción no se puede deshacer.')){a.splice(i,1);setData(k,a);refreshHome()}}
 function newReport(){showView('report');clearReport();$('rNumber').value=nextNum('edsReportNum','EDS-');$('rDate').value=today();$('rTech').value='Javier Loachamín';addMaterial();initSignature();$('reportPreview').innerHTML='';$('saveNotice').innerHTML=''}
+function receiveDictation(){const u=new URL(window.location.href),text=u.searchParams.get('dictado'),field=u.searchParams.get('campo')||'work';if(!text)return;showView('report');clearReport();$('rNumber').value=nextNum('edsReportNum','EDS-');$('rDate').value=today();$('rTech').value='Javier Loachamín';addMaterial();initSignature();$('reportPreview').innerHTML='';$('saveNotice').innerHTML='';const target=field==='reason'?'rReason':field==='diagnosis'?'rDiagnosis':field==='tests'?'rTests':field==='result'?'rResult':field==='obs'?'rObs':'rWork';target.value=text.trim();target.focus();$('saveNotice').innerHTML='<div class="notice">✓ Dictado agregado al campo "'+esc(target.previousElementSibling?.textContent||'Trabajo realizado')+'". Revisa el texto y guarda el informe.</div>';u.searchParams.delete('dictado');u.searchParams.delete('campo');history.replaceState({},document.title,u.pathname+(u.hash||''));}
+
 function clearReport(){['rClient','rStation','rAddress','rContact','rEquipment','rEquipmentId','rReason','rDiagnosis','rWork','rTests','rResult','rObs','rStart','rEnd'].forEach(id=>$(id).value='');$('rType').value='Preventivo';$('materialsBody').innerHTML='';$('photoGrid').innerHTML='';reportPhotos=[];$('rPhotos').value=''}
 function addMaterial(v={}){let tr=document.createElement('tr');tr.innerHTML=`<td><input class="m-desc" value="${esc(v.desc||'')}"></td><td><input class="m-qty" type="number" min="0" step="0.01" value="${esc(v.qty||'')}"></td><td><input class="m-unit" value="${esc(v.unit||'und')}"></td><td><input class="m-obs" value="${esc(v.obs||'')}"></td><td><button class="btn danger" onclick="this.closest('tr').remove()">×</button></td>`;$('materialsBody').appendChild(tr)}
 function collectMaterials(){return[...$('materialsBody').rows].map(tr=>({desc:tr.querySelector('.m-desc').value,qty:tr.querySelector('.m-qty').value,unit:tr.querySelector('.m-unit').value,obs:tr.querySelector('.m-obs').value})).filter(x=>x.desc.trim())}
@@ -198,7 +200,7 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredIns
 $('installBtn').addEventListener('click',async()=>{if(!deferredInstall)return;deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;$('installBtn').classList.remove('show')});
 window.addEventListener('appinstalled',()=>{$('installBtn').classList.remove('show')});
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(console.error))}
-window.addEventListener('load',()=>{initSignature();refreshHome();showView('home')});
+window.addEventListener('load',()=>{initSignature();refreshHome();if(new URL(window.location.href).searchParams.get('dictado')){receiveDictation()}else{showView('home')}});
 </script>
 </main>
 </body>
