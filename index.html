@@ -42,6 +42,10 @@ textarea{min-height:90px;resize:vertical}
 .photo-grid{display:flex;flex-wrap:wrap;gap:8px}.photo-grid img{width:140px;height:105px;object-fit:cover;border-radius:8px}
 .signature canvas{width:100%;height:220px;border:2px dashed #98a2b3;border-radius:10px;touch-action:none;display:block;background:#fff;cursor:crosshair}
 .signature-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.voice-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 5px}
+.voice-row label{margin:0}
+.voice-btn{border:0;border-radius:9px;padding:8px 12px;background:#e9efff;color:#0b5cff;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+.voice-btn.listening{background:#067647;color:#fff}
 .preview{background:#fff;padding:20px;border-radius:10px}
 .report-brand{display:flex;align-items:center;gap:18px;border-bottom:3px solid #0b5cff;padding:0 0 13px;margin-bottom:18px}
 .report-brand img{width:150px;height:78px;object-fit:contain;background:#fff;border-radius:8px;padding:3px;flex:0 0 auto}
@@ -98,12 +102,13 @@ textarea{min-height:90px;resize:vertical}
       <div><label>Inicio</label><input id="rStart" type="datetime-local"></div>
       <div><label>Fin</label><input id="rEnd" type="datetime-local"></div>
     </div>
-    <label>Motivo / falla reportada</label><textarea id="rReason"></textarea>
-    <label>Diagnóstico</label><textarea id="rDiagnosis"></textarea>
-    <label>Trabajo realizado</label><textarea id="rWork"></textarea><div class="muted no-print" style="margin-top:5px">🎙️ También puedes usar el atajo “Dictate & Share” para enviar el dictado directamente a este campo.</div>
-    <label>Pruebas y verificaciones</label><textarea id="rTests"></textarea>
-    <label>Resultado</label><textarea id="rResult"></textarea>
-    <label>Observaciones / recomendaciones</label><textarea id="rObs"></textarea>
+    <div class="voice-row"><label>Motivo / falla reportada</label><button type="button" class="voice-btn" data-voice="rReason">🎙️ Dictar</button></div><textarea id="rReason"></textarea>
+    <div class="voice-row"><label>Diagnóstico</label><button type="button" class="voice-btn" data-voice="rDiagnosis">🎙️ Dictar</button></div><textarea id="rDiagnosis"></textarea>
+    <div class="voice-row"><label>Trabajo realizado</label><button type="button" class="voice-btn" data-voice="rWork">🎙️ Dictar</button></div><textarea id="rWork"></textarea>
+    <div class="muted no-print" style="margin-top:5px">🎙️ Puedes dictar directamente en cada campo o usar el atajo “Dictate & Share”.</div>
+    <div class="voice-row"><label>Pruebas y verificaciones</label><button type="button" class="voice-btn" data-voice="rTests">🎙️ Dictar</button></div><textarea id="rTests"></textarea>
+    <div class="voice-row"><label>Resultado</label><button type="button" class="voice-btn" data-voice="rResult">🎙️ Dictar</button></div><textarea id="rResult"></textarea>
+    <div class="voice-row"><label>Observaciones / recomendaciones</label><button type="button" class="voice-btn" data-voice="rObs">🎙️ Dictar</button></div><textarea id="rObs"></textarea>
     <label>Técnico responsable</label><input id="rTech" value="Javier Loachamín">
 
     <h3>Materiales / repuestos</h3>
@@ -167,6 +172,30 @@ function newReport(){showView('report');clearReport();$('rNumber').value=nextNum
 function receiveDictation(){const u=new URL(window.location.href),text=u.searchParams.get('dictado'),field=u.searchParams.get('campo')||'work';if(!text)return;showView('report');clearReport();$('rNumber').value=nextNum('edsReportNum','EDS-');$('rDate').value=today();$('rTech').value='Javier Loachamín';addMaterial();initSignature();$('reportPreview').innerHTML='';$('saveNotice').innerHTML='';const target=field==='reason'?'rReason':field==='diagnosis'?'rDiagnosis':field==='tests'?'rTests':field==='result'?'rResult':field==='obs'?'rObs':'rWork';target.value=text.trim();target.focus();$('saveNotice').innerHTML='<div class="notice">✓ Dictado agregado al campo "'+esc(target.previousElementSibling?.textContent||'Trabajo realizado')+'". Revisa el texto y guarda el informe.</div>';u.searchParams.delete('dictado');u.searchParams.delete('campo');history.replaceState({},document.title,u.pathname+(u.hash||''));}
 
 function clearReport(){['rClient','rStation','rAddress','rContact','rEquipment','rEquipmentId','rReason','rDiagnosis','rWork','rTests','rResult','rObs','rStart','rEnd'].forEach(id=>$(id).value='');$('rType').value='Preventivo';$('materialsBody').innerHTML='';$('photoGrid').innerHTML='';reportPhotos=[];$('rPhotos').value=''}
+let activeRecognition=null,activeVoiceButton=null,voiceBaseText='';
+function startVoice(fieldId,button){
+  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SpeechRecognition){
+    alert('Este navegador no permite reconocimiento de voz directo. En iPhone puedes usar el teclado 🎙️ o el atajo “Dictate & Share”.');
+    return;
+  }
+  if(activeRecognition){activeRecognition.stop();return;}
+  const target=$(fieldId); voiceBaseText=target.value.trim(); activeVoiceButton=button;
+  const rec=new SpeechRecognition();
+  rec.lang='es-EC'; rec.continuous=true; rec.interimResults=true; activeRecognition=rec;
+  button.classList.add('listening'); button.textContent='⏹️ Detener';
+  rec.onresult=e=>{
+    let finalText='';
+    for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)finalText+=t+' ';}
+    if(finalText){target.value=(voiceBaseText?(voiceBaseText+' '):'')+finalText.trim();voiceBaseText=target.value;}
+  };
+  rec.onerror=e=>{
+    if(e.error==='not-allowed'||e.error==='service-not-allowed') alert('Permite el acceso al micrófono para Informe EDS en Safari/Ajustes del iPhone.');
+  };
+  rec.onend=()=>{activeRecognition=null;if(activeVoiceButton){activeVoiceButton.classList.remove('listening');activeVoiceButton.textContent='🎙️ Dictar';activeVoiceButton=null;}};
+  try{rec.start();}catch(e){rec.onend();}
+}
+function initVoiceButtons(){document.querySelectorAll('[data-voice]').forEach(btn=>{btn.onclick=()=>startVoice(btn.dataset.voice,btn);});}
 function addMaterial(v={}){let tr=document.createElement('tr');tr.innerHTML=`<td><input class="m-desc" value="${esc(v.desc||'')}"></td><td><input class="m-qty" type="number" min="0" step="0.01" value="${esc(v.qty||'')}"></td><td><input class="m-unit" value="${esc(v.unit||'und')}"></td><td><input class="m-obs" value="${esc(v.obs||'')}"></td><td><button class="btn danger" onclick="this.closest('tr').remove()">×</button></td>`;$('materialsBody').appendChild(tr)}
 function collectMaterials(){return[...$('materialsBody').rows].map(tr=>({desc:tr.querySelector('.m-desc').value,qty:tr.querySelector('.m-qty').value,unit:tr.querySelector('.m-unit').value,obs:tr.querySelector('.m-obs').value})).filter(x=>x.desc.trim())}
 function loadPhotos(e){[...e.target.files].forEach(f=>{let rd=new FileReader();rd.onload=()=>{reportPhotos.push(rd.result);renderPhotos()};rd.readAsDataURL(f)});e.target.value=''}
@@ -200,7 +229,7 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredIns
 $('installBtn').addEventListener('click',async()=>{if(!deferredInstall)return;deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;$('installBtn').classList.remove('show')});
 window.addEventListener('appinstalled',()=>{$('installBtn').classList.remove('show')});
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(console.error))}
-window.addEventListener('load',()=>{initSignature();refreshHome();if(new URL(window.location.href).searchParams.get('dictado')){receiveDictation()}else{showView('home')}});
+window.addEventListener('load',()=>{initSignature();initVoiceButtons();refreshHome();if(new URL(window.location.href).searchParams.get('dictado')){receiveDictation()}else{showView('home')}});
 </script>
 </main>
 </body>
