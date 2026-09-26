@@ -218,42 +218,35 @@ async function saveSharePDF(){
   previewReport();
   const x=reportObj();
   preparePrintTitle(x);
-  $('saveNotice').innerHTML='<div class="notice">⏳ Preparando el PDF para compartir...</div>';
+  $('saveNotice').innerHTML='<div class="notice">⏳ Preparando el PDF completo...</div>';
   try{
-    if(!window.html2canvas || !window.jspdf) throw new Error('PDF_LIBS');
+    if(!window.jspdf) throw new Error('PDF_LIBS');
     const node=$('reportPreview');
-    const canvas=await html2canvas(node,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false});
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
-    const pageW=210,pageH=297,margin=0;
-    const imgW=pageW;
-    const pxPerPage=Math.floor(canvas.width*(pageH/pageW));
-    let y=0,first=true;
-    while(y<canvas.height){
-      const h=Math.min(pxPerPage,canvas.height-y);
-      const pageCanvas=document.createElement('canvas');
-      pageCanvas.width=canvas.width; pageCanvas.height=h;
-      pageCanvas.getContext('2d').drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);
-      const img=pageCanvas.toDataURL('image/jpeg',0.92);
-      if(!first) pdf.addPage();
-      pdf.addImage(img,'JPEG',margin,0,pageW,(h/canvas.width)*pageW,'FAST');
-      first=false; y+=h;
-    }
+    await pdf.html(node,{
+      margin:[10,10,10,10],
+      autoPaging:'text',
+      html2canvas:{scale:1.15,useCORS:true,backgroundColor:'#ffffff',logging:false},
+      image:{type:'jpeg',quality:0.92},
+      width:190,
+      windowWidth:980
+    });
     const blob=pdf.output('blob');
     const safe=(x.number||'Informe_EDS').replace(/[^a-zA-Z0-9_-]/g,'_');
     const file=new File([blob],safe+'.pdf',{type:'application/pdf'});
     if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
       await navigator.share({files:[file],title:safe,text:'Informe de trabajo '+(x.number||'')});
-      $('saveNotice').innerHTML='<div class="notice">✓ PDF listo para compartir.</div>';
+      $('saveNotice').innerHTML='<div class="notice">✓ PDF completo listo para compartir.</div>';
     }else{
       const url=URL.createObjectURL(blob);
-      const a=document.createElement('a'); a.href=url; a.download=file.name; a.click();
-      setTimeout(()=>URL.revokeObjectURL(url),3000);
-      $('saveNotice').innerHTML='<div class="notice">✓ PDF generado. Si no se abre la opción de compartir, el archivo se descargará para guardarlo en Archivos.</div>';
+      const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),5000);
+      $('saveNotice').innerHTML='<div class="notice">✓ PDF completo generado. Puedes guardarlo en Archivos.</div>';
     }
   }catch(e){
     console.error(e);
-    $('saveNotice').innerHTML='<div class="notice">⚠️ No se pudo crear el PDF. Comprueba que tienes internet y vuelve a intentarlo.</div>';
+    $('saveNotice').innerHTML='<div class="notice">⚠️ No se pudo generar el PDF completo. Intenta nuevamente desde Safari.</div>';
   }
 }
 function newQuote(){showView('quote');['qClient','qStation','qAddress','qContact','qDescription'].forEach(id=>$(id).value='');$('qNumber').value=nextNum('edsQuoteNum','COT-');$('qDate').value=today();$('qConditions').value='Cotización válida por 15 días. Valores sujetos a las condiciones indicadas en la propuesta.';$('quoteBody').innerHTML='';addQuoteItem();$('quotePreview').innerHTML=''}
