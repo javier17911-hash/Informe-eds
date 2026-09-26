@@ -211,7 +211,22 @@ function reportHTML(x){let mats=x.materials?.length?`<h3>Materiales / repuestos<
 function previewReport(){$('reportPreview').innerHTML=reportHTML(reportObj())}
 function printReport(){previewReport();preparePrintTitle(reportObj());$('report').classList.add('printing');window.print();setTimeout(()=>{$('report').classList.remove('printing');document.title='Informe EDS | Informes y Cotizaciones'},700)}
 function preparePrintTitle(x){let parts=[x.number,x.client,x.station,x.date].filter(Boolean).map(v=>String(v).replace(/[\\/:*?"<>|]/g,'-').trim());document.title=parts.length?parts.join('_'):'Informe_EDS'}
-function saveSharePDF(){saveReport();previewReport();let x=reportObj();preparePrintTitle(x);$('report').classList.add('printing');setTimeout(()=>{window.print();setTimeout(()=>{$('report').classList.remove('printing');document.title='Informe EDS | Informes y Cotizaciones'},700)},150)}
+function saveSharePDF(){
+  saveReport();
+  previewReport();
+  let x=reportObj();
+  preparePrintTitle(x);
+  $('report').classList.add('printing');
+  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  $('saveNotice').innerHTML='<div class="notice">📄 Informe preparado. '+(isStandalone?'Para guardar el PDF, abre Informe EDS en Safari y vuelve a pulsar este botón.':'Se abrirá la opción de impresión/guardar PDF.')+'</div>';
+  if(isStandalone){
+    return;
+  }
+  try{window.print();}catch(e){
+    $('saveNotice').innerHTML='<div class="notice">⚠️ No se pudo abrir la ventana de PDF. Abre Informe EDS directamente en Safari e inténtalo nuevamente.</div>';
+  }
+  setTimeout(()=>{$('report').classList.remove('printing');document.title='Informe EDS | Informes y Cotizaciones'},700);
+}
 function newQuote(){showView('quote');['qClient','qStation','qAddress','qContact','qDescription'].forEach(id=>$(id).value='');$('qNumber').value=nextNum('edsQuoteNum','COT-');$('qDate').value=today();$('qConditions').value='Cotización válida por 15 días. Valores sujetos a las condiciones indicadas en la propuesta.';$('quoteBody').innerHTML='';addQuoteItem();$('quotePreview').innerHTML=''}
 function addQuoteItem(v={}){let tr=document.createElement('tr');tr.innerHTML=`<td><input class="q-desc" value="${esc(v.desc||'')}"></td><td><input class="q-qty" type="number" min="0" step="0.01" value="${v.qty??1}" oninput="calcQuote()"></td><td><input class="q-unit" value="${esc(v.unit||'und')}"></td><td><input class="q-price" type="number" min="0" step="0.01" value="${v.price??0}" oninput="calcQuote()"></td><td class="q-line">$0.00</td><td><button class="btn danger" onclick="this.closest('tr').remove();calcQuote()">×</button></td>`;$('quoteBody').appendChild(tr);calcQuote()}
 function quoteItems(){return[...$('quoteBody').rows].map(tr=>({desc:tr.querySelector('.q-desc').value,qty:+tr.querySelector('.q-qty').value||0,unit:tr.querySelector('.q-unit').value,price:+tr.querySelector('.q-price').value||0}))}
